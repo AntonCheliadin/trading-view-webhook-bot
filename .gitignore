@@ -1,0 +1,4 @@
+# Database volume
+/docker/volume_db/
+.vscode
+/.env

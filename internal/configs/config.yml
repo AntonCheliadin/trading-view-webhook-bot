@@ -1,0 +1,9 @@
+api:
+  bybit:
+    commission: 0.001
+
+telegram:
+  enabled: true
+
+default:
+  leverage: 1

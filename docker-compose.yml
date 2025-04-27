@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  db:
+    container_name: tradingview_webhook_db
+    image: postgres:14
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      - ./docker/volume_db:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
