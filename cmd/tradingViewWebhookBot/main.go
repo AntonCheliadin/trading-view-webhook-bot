@@ -120,7 +120,11 @@ func setupRoutes(r *chi.Mux, healthController *controller.HealthController, coin
 }
 
 func (a *App) run() error {
-	port := os.Getenv("API_PORT")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
 	a.logger.Info("Server starting", zap.String("port", port))
 	return http.ListenAndServe(":"+port, a.router)
 }
