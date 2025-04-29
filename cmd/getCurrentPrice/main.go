@@ -19,8 +19,10 @@ func main() {
 	defer logger.Sync()
 
 	// Load environment variables
-	if err := godotenv.Load(); err != nil {
-		logger.Fatal("Error loading .env file", zap.Error(err))
+	if _, err := os.Stat(".env"); err == nil {
+		if err := godotenv.Load(); err != nil {
+			logger.Error("Warning: Error loading .env file: %v", zap.Error(err))
+		}
 	}
 
 	// Initialize database connection

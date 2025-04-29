@@ -24,6 +24,7 @@ func NewPostgresConnection() (*sqlx.DB, error) {
 			os.Getenv("DB_NAME"),
 		)
 	}
+	zap.S().Info(connStr)
 
 	db, err := sqlx.Connect("postgres", connStr)
 	if err != nil {
