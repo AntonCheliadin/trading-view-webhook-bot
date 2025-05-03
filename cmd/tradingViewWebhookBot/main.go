@@ -45,6 +45,8 @@ func initializeApp() (*App, error) {
 	logger := logger.InitLogger()
 	zap.ReplaceGlobals(logger)
 
+	logger.Info("tradingViewWebhookBot starting...")
+
 	if _, err := os.Stat(".env"); err == nil {
 		logger.Info(".env file found")
 		if err := godotenv.Load(); err != nil {

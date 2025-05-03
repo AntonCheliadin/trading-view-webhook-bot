@@ -18,6 +18,8 @@ func main() {
 	logger := logger.InitLogger()
 	defer logger.Sync()
 
+	logger.Info("testBybitClientLib starting...")
+
 	// Load environment variables
 	if err := godotenv.Load(); err != nil {
 		logger.Fatal("Error loading .env file", zap.Error(err))
