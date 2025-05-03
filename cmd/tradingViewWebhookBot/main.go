@@ -35,13 +35,11 @@ func main() {
 }
 
 func initializeApp() (*App, error) {
-	// Initialize config
 	err := initConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	// Initialize logger
 	logger := logger.InitLogger()
 	zap.ReplaceGlobals(logger)
 
@@ -56,13 +54,11 @@ func initializeApp() (*App, error) {
 		logger.Warn(".env file not found")
 	}
 
-	// Initialize database
 	db, err := database.NewPostgresConnection()
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %v", err)
 	}
 
-	// Initialize router
 	router := initializeRouter(db)
 
 	return &App{
