@@ -2,24 +2,18 @@ package main
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
-	"log"
-	"net/http"
-	"os"
-	"tradingViewWebhookBot/internal/api/bybit"
-	"tradingViewWebhookBot/internal/controller"
-	"tradingViewWebhookBot/internal/database"
-	"tradingViewWebhookBot/internal/logger"
-	"tradingViewWebhookBot/internal/repository"
-	"tradingViewWebhookBot/internal/service/date"
-	"tradingViewWebhookBot/internal/service/orders"
-	"tradingViewWebhookBot/internal/telegram"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"log"
+	"net/http"
+	"os"
+	"tradingViewWebhookBot/internal/controller"
+	"tradingViewWebhookBot/internal/database"
+	"tradingViewWebhookBot/internal/logger"
 )
 
 type App struct {
@@ -73,23 +67,23 @@ func initializeApp() (*App, error) {
 }
 
 func initializeRouter(db *sqlx.DB) *chi.Mux {
-	repos := repository.NewRepositories(db)
-
-	exchangeApi := bybit.NewBybitApi(os.Getenv("BYBIT_API_KEY"), os.Getenv("BYBIT_API_SECRET"))
-
-	telegramClient := telegram.NewTelegramClient()
-
-	orderManagerService := orders.NewOrderManagerService(
-		repos.Transaction,
-		exchangeApi,
-		date.GetClock(),
-		telegramClient,
-		viper.GetInt64("default.leverage"))
+	//repos := repository.NewRepositories(db)
+	//
+	//exchangeApi := bybit.NewBybitApi(os.Getenv("BYBIT_API_KEY"), os.Getenv("BYBIT_API_SECRET"))
+	//
+	//telegramClient := telegram.NewTelegramClient()
+	//
+	//orderManagerService := orders.NewOrderManagerService(
+	//	repos.Transaction,
+	//	exchangeApi,
+	//	date.GetClock(),
+	//	telegramClient,
+	//	viper.GetInt64("default.leverage"))
 
 	// Initialize controllers
 	healthController := controller.NewHealthController()
-	coinController := controller.NewCoinController(repos.Coin, exchangeApi, telegramClient)
-	webhookController := controller.NewAlertWebhookController(repos.TradingStrategy, repos.Transaction, repos.Coin, exchangeApi, telegramClient, orderManagerService)
+	//coinController := controller.NewCoinController(repos.Coin, exchangeApi, telegramClient)
+	//webhookController := controller.NewAlertWebhookController(repos.TradingStrategy, repos.Transaction, repos.Coin, exchangeApi, telegramClient, orderManagerService)
 
 	// Initialize router
 	r := chi.NewRouter()
@@ -99,7 +93,8 @@ func initializeRouter(db *sqlx.DB) *chi.Mux {
 	r.Use(middleware.Recoverer)
 
 	// Routes
-	setupRoutes(r, healthController, coinController, webhookController)
+	r.Get("/health", healthController.HealthCheck)
+	//setupRoutes(r, healthController, coinController, webhookController)
 
 	return r
 }
