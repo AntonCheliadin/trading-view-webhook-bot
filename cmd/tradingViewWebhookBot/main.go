@@ -45,9 +45,13 @@ func initializeApp() (*App, error) {
 	logger := logger.InitLogger()
 	zap.ReplaceGlobals(logger)
 
-	// Load environment variables
-	if err := godotenv.Load(); err != nil {
-		logger.Error("Warning: Error loading .env file: %v", zap.Error(err))
+	if _, err := os.Stat(".env"); err == nil {
+		logger.Info(".env file found")
+		if err := godotenv.Load(); err != nil {
+			logger.Error(".env file found but loading failed: %v", zap.Error(err))
+		}
+	} else {
+		logger.Warn(".env file not found")
 	}
 
 	// Initialize database
