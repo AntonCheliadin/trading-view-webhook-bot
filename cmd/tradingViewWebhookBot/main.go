@@ -53,7 +53,7 @@ func initializeApp() (*App, error) {
 
 	// Load environment variables
 	if err := godotenv.Load(); err != nil {
-		return nil, fmt.Errorf("error loading .env file: %v", err)
+		logger.Error("Warning: Error loading .env file: %v", zap.Error(err))
 	}
 
 	// Initialize database
