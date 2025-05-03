@@ -11,9 +11,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"tradingViewWebhookBot/internal/api/bybit"
 	"tradingViewWebhookBot/internal/controller"
 	"tradingViewWebhookBot/internal/database"
 	"tradingViewWebhookBot/internal/logger"
+	"tradingViewWebhookBot/internal/repository"
+	"tradingViewWebhookBot/internal/service/date"
+	"tradingViewWebhookBot/internal/service/orders"
+	"tradingViewWebhookBot/internal/telegram"
 )
 
 type App struct {
@@ -69,34 +74,29 @@ func initializeApp() (*App, error) {
 }
 
 func initializeRouter(db *sqlx.DB) *chi.Mux {
-	//repos := repository.NewRepositories(db)
-	//
-	//exchangeApi := bybit.NewBybitApi(os.Getenv("BYBIT_API_KEY"), os.Getenv("BYBIT_API_SECRET"))
-	//
-	//telegramClient := telegram.NewTelegramClient()
-	//
-	//orderManagerService := orders.NewOrderManagerService(
-	//	repos.Transaction,
-	//	exchangeApi,
-	//	date.GetClock(),
-	//	telegramClient,
-	//	viper.GetInt64("default.leverage"))
+	repos := repository.NewRepositories(db)
 
-	// Initialize controllers
+	exchangeApi := bybit.NewBybitApi(os.Getenv("BYBIT_API_KEY"), os.Getenv("BYBIT_API_SECRET"))
+
+	telegramClient := telegram.NewTelegramClient()
+
+	orderManagerService := orders.NewOrderManagerService(
+		repos.Transaction,
+		exchangeApi,
+		date.GetClock(),
+		telegramClient,
+		viper.GetInt64("default.leverage"))
+
 	healthController := controller.NewHealthController()
-	//coinController := controller.NewCoinController(repos.Coin, exchangeApi, telegramClient)
-	//webhookController := controller.NewAlertWebhookController(repos.TradingStrategy, repos.Transaction, repos.Coin, exchangeApi, telegramClient, orderManagerService)
+	coinController := controller.NewCoinController(repos.Coin, exchangeApi, telegramClient)
+	webhookController := controller.NewAlertWebhookController(repos.TradingStrategy, repos.Transaction, repos.Coin, exchangeApi, telegramClient, orderManagerService)
 
-	// Initialize router
 	r := chi.NewRouter()
 
-	// Middleware
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	// Routes
-	r.Get("/health", healthController.HealthCheck)
-	//setupRoutes(r, healthController, coinController, webhookController)
+	setupRoutes(r, healthController, coinController, webhookController)
 
 	return r
 }
