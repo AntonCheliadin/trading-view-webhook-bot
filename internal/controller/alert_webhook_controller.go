@@ -89,19 +89,19 @@ func (c *AlertWebhookController) HandleAlert(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if openedTransaction == nil {
-		c.orderManagerService.OpenOrderAllIn(
-			strategy,
-			coin,
-			alertRequest.GetFuturesType(),
-		)
-	} else {
+	if openedTransaction != nil && alertRequest.IsCloseRequest() {
 		c.orderManagerService.CloseOrder(
 			strategy,
 			openedTransaction,
 			coin,
 			alertRequest.GetPriceFloat(),
 			constants.FUTURES,
+		)
+	} else if openedTransaction == nil && !alertRequest.IsCloseRequest() {
+		c.orderManagerService.OpenOrderAllIn(
+			strategy,
+			coin,
+			alertRequest.GetFuturesType(),
 		)
 	}
 

@@ -17,7 +17,7 @@ type AlertRequestDto struct {
 }
 
 func (r AlertRequestDto) GetFuturesType() futureType.FuturesType {
-	if r.Side == "sell" {
+	if r.GetPositionSizeFloat() < 0 {
 		return futureType.SHORT
 	}
 	return futureType.LONG
@@ -38,6 +38,18 @@ func (r AlertRequestDto) String() string {
 
 func (r AlertRequestDto) GetPriceFloat() float64 {
 	price, err := strconv.ParseFloat(r.Price, 64)
+	if err != nil {
+		return 0
+	}
+	return price
+}
+
+func (r AlertRequestDto) IsCloseRequest() bool {
+	return r.GetPositionSizeFloat() == 0
+}
+
+func (r AlertRequestDto) GetPositionSizeFloat() float64 {
+	price, err := strconv.ParseFloat(r.PositionSize, 64)
 	if err != nil {
 		return 0
 	}
