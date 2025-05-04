@@ -78,7 +78,7 @@ func (r *tradingStrategyRepository) List() ([]domain.TradingStrategy, error) {
 
 func (r *tradingStrategyRepository) FindByTag(tag string) (*domain.TradingStrategy, error) {
 	var strategy domain.TradingStrategy
-	if err := r.db.Get(&strategy, "SELECT * FROM trading_strategies WHERE enabled = true AND tag=$1", tag); err != nil {
+	if err := r.db.Get(&strategy, "SELECT * FROM trading_strategies WHERE enabled = true AND tag = $1", tag); err != nil {
 		if strings.Contains(err.Error(), "no rows in result set") {
 			return nil, nil
 		}
