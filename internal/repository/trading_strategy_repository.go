@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"go.uber.org/zap"
 	"time"
 	"tradingViewWebhookBot/internal/domain"
 )
@@ -128,6 +129,7 @@ func (r *tradingStrategyRepository) FindByTag(tag string) (*domain.TradingStrate
 	err := r.db.Get(&strategy, query, tag)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			zap.L().Warn("No strategy found", zap.String("tag", tag))
 			return nil, nil // Return nil if no strategy found
 		}
 		return nil, fmt.Errorf("error finding trading strategy by tag: %w", err)
