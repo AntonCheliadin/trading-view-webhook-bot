@@ -1,5 +1,5 @@
 -- +migrate Up
-DELETE trading_strategies;
+DELETE FROM trading_strategies;
 
 -- +migrate Up
 INSERT INTO trading_strategies (name, description, tag, created_at, updated_at)
