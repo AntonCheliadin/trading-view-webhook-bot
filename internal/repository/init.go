@@ -41,10 +41,7 @@ type Transaction interface {
 }
 
 type TradingStrategy interface {
-	Create(strategy *domain.TradingStrategy) error
-	GetByID(id int64) (*domain.TradingStrategy, error)
 	Update(strategy *domain.TradingStrategy) error
-	Delete(id int64) error
 	List() ([]domain.TradingStrategy, error)
 	FindByTag(tag string) (*domain.TradingStrategy, error)
 }

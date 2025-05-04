@@ -2,9 +2,8 @@ package repository
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/jmoiron/sqlx"
-	"go.uber.org/zap"
+	"strings"
 	"time"
 	"tradingViewWebhookBot/internal/domain"
 )
@@ -17,45 +16,17 @@ func NewTradingStrategyRepository(db *sqlx.DB) TradingStrategy {
 	return &tradingStrategyRepository{db: db}
 }
 
-func (r *tradingStrategyRepository) Create(strategy *domain.TradingStrategy) error {
-	query := `
-        INSERT INTO trading_strategies (name, description, created_at, updated_at)
-        VALUES ($1, $2, $3, $3)
-        RETURNING id`
-
-	now := time.Now()
-	return r.db.QueryRow(query, strategy.Name, strategy.Description, now).Scan(&strategy.Id)
-}
-
-func (r *tradingStrategyRepository) GetByID(id int64) (*domain.TradingStrategy, error) {
-	strategy := &domain.TradingStrategy{}
-	query := `
-        SELECT id, name, description, created_at, updated_at
-        FROM trading_strategies
-        WHERE id = $1`
-
-	err := r.db.QueryRow(query, id).Scan(
-		&strategy.Id,
-		&strategy.Name,
-		&strategy.Description,
-		&strategy.CreatedAt,
-		&strategy.UpdatedAt,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return strategy, nil
-}
-
 func (r *tradingStrategyRepository) Update(strategy *domain.TradingStrategy) error {
 	query := `
         UPDATE trading_strategies
-        SET name = $1, description = $2, updated_at = $3
-        WHERE id = $4`
+        SET name = $1, description = $2, tag = $3, enabled = $4, updated_at = $5
+        WHERE id = $6`
 
 	result, err := r.db.Exec(query,
 		strategy.Name,
 		strategy.Description,
+		strategy.Tag,
+		strategy.Enabled,
 		time.Now(),
 		strategy.Id,
 	)
@@ -73,26 +44,9 @@ func (r *tradingStrategyRepository) Update(strategy *domain.TradingStrategy) err
 	return nil
 }
 
-func (r *tradingStrategyRepository) Delete(id int64) error {
-	query := `DELETE FROM trading_strategies WHERE id = $1`
-	result, err := r.db.Exec(query, id)
-	if err != nil {
-		return err
-	}
-
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if affected == 0 {
-		return sql.ErrNoRows
-	}
-	return nil
-}
-
 func (r *tradingStrategyRepository) List() ([]domain.TradingStrategy, error) {
 	query := `
-        SELECT id, name, description, created_at, updated_at
+        SELECT *
         FROM trading_strategies
         ORDER BY id`
 
@@ -109,6 +63,8 @@ func (r *tradingStrategyRepository) List() ([]domain.TradingStrategy, error) {
 			&strategy.Id,
 			&strategy.Name,
 			&strategy.Description,
+			&strategy.Tag,
+			&strategy.Enabled,
 			&strategy.CreatedAt,
 			&strategy.UpdatedAt,
 		)
@@ -122,17 +78,11 @@ func (r *tradingStrategyRepository) List() ([]domain.TradingStrategy, error) {
 
 func (r *tradingStrategyRepository) FindByTag(tag string) (*domain.TradingStrategy, error) {
 	var strategy domain.TradingStrategy
-	query := `SELECT id, name, description, tag, enabled, created_at, updated_at 
-              FROM trading_strategies 
-              WHERE tag = $1 AND enabled = true`
-
-	err := r.db.Get(&strategy, query, tag)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			zap.L().Warn("No strategy found", zap.String("tag", tag))
-			return nil, nil // Return nil if no strategy found
+	if err := r.db.Get(&strategy, "SELECT * FROM trading_strategies WHERE enabled = true AND tag=$1", tag); err != nil {
+		if strings.Contains(err.Error(), "no rows in result set") {
+			return nil, nil
 		}
-		return nil, fmt.Errorf("error finding trading strategy by tag: %w", err)
+		return nil, err
 	}
 
 	return &strategy, nil

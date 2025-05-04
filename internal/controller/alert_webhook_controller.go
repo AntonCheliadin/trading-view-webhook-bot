@@ -68,7 +68,15 @@ func (c *AlertWebhookController) HandleAlert(w http.ResponseWriter, r *http.Requ
 	}
 
 	strategy, err := c.strategyRepo.FindByTag(alertRequest.Tag)
-	if err != nil || strategy == nil {
+	if err != nil {
+		zap.S().Error("Failed to find strategy by tag", err)
+		c.telegramClient.SendMessage(fmt.Sprintf("Failed to find strategy by tag: %s", alertRequest.Tag))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if strategy == nil {
+		zap.S().Error("Strategy by tag not found", err)
 		c.telegramClient.SendMessage(fmt.Sprintf("Trading strategy not found: %s", alertRequest.Tag))
 		w.WriteHeader(http.StatusBadRequest)
 		return
