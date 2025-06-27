@@ -90,19 +90,20 @@ func initializeRouter(db *sqlx.DB) *chi.Mux {
 	healthController := controller.NewHealthController()
 	coinController := controller.NewCoinController(repos.Coin, exchangeApi, telegramClient)
 	webhookController := controller.NewAlertWebhookController(repos.TradingStrategy, repos.Transaction, repos.Coin, exchangeApi, telegramClient, orderManagerService)
+	debugController := controller.NewDebugController(repos.TradingStrategy, repos.Transaction, repos.Coin, exchangeApi, telegramClient, orderManagerService)
 
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	setupRoutes(r, healthController, coinController, webhookController)
+	setupRoutes(r, healthController, coinController, webhookController, debugController)
 
 	return r
 }
 
 func setupRoutes(r *chi.Mux, healthController *controller.HealthController, coinController *controller.CoinController,
-	webhookController *controller.AlertWebhookController) {
+	webhookController *controller.AlertWebhookController, debugController *controller.DebugController) {
 	r.Get("/health", healthController.HealthCheck)
 
 	// Coin routes
@@ -114,6 +115,11 @@ func setupRoutes(r *chi.Mux, healthController *controller.HealthController, coin
 
 	r.HandleFunc("/webhook/alert", webhookController.HandleAlert)
 
+	// Debug routes
+	r.Route("/debug", func(r chi.Router) {
+		r.Get("/open/{symbol}/{strategyTag}/{futureType}", debugController.OpenOrderAllIn)
+		r.Get("/close/{symbol}/{strategyTag}", debugController.CloseOrder)
+	})
 }
 
 func (a *App) run() error {

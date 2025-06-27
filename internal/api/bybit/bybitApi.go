@@ -450,6 +450,7 @@ func (api *BybitApi) GetWalletBalance() (api.WalletBalanceDto, error) {
 	if err != nil {
 		return nil, err
 	}
+	zap.S().Debug("GetWalletBalance", result)
 
 	dto := wallet.GetWalletBalanceDto{}
 	if err := mapstructure.Decode(result, &dto); err != nil {
