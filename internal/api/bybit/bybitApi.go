@@ -294,6 +294,7 @@ func (api *BybitApi) makeFutureOrderByMarket(coin *domain.Coin, quantity float64
 		"orderType":   "Market",
 		"qty":         fmt.Sprintf("%.3f", quantity),
 	}
+	zap.S().Info("bybit params", params)
 	response, err := api.client.NewUtaBybitServiceWithParams(params).PlaceOrder(context.Background())
 	if err != nil {
 		return nil, err
