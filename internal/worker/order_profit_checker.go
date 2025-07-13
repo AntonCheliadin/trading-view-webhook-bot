@@ -86,7 +86,7 @@ func (c *OrderProfitChecker) CheckOrderProfits() {
 	for _, strategy := range strategies {
 		openedTransactions, err := c.transactionRepo.FindAllOpenedTransactions(strategy)
 		if err != nil {
-			zap.S().Error("Failed to get opened transactions for strategy:", strategy.Tag, err)
+			zap.S().Error("Failed to get opened transactions for strategy: ", strategy.Tag, err)
 			continue
 		}
 
