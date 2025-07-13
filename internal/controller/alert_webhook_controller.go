@@ -89,20 +89,32 @@ func (c *AlertWebhookController) HandleAlert(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if openedTransaction != nil && alertRequest.IsCloseRequest() {
-		c.orderManagerService.CloseOrder(
-			strategy,
-			openedTransaction,
-			coin,
-			alertRequest.GetPriceFloat(),
-			constants.FUTURES,
-		)
-	} else if openedTransaction == nil && !alertRequest.IsCloseRequest() {
-		c.orderManagerService.OpenOrderAllIn(
-			strategy,
-			coin,
-			alertRequest.GetFuturesType(),
-		)
+	if openedTransaction != nil {
+		if alertRequest.IsCloseRequest() {
+			c.orderManagerService.CloseOrder(
+				strategy,
+				openedTransaction,
+				coin,
+				alertRequest.GetPriceFloat(),
+				constants.FUTURES,
+			)
+		} else {
+			zap.S().Error("Order already opened.")
+			c.telegramClient.SendMessage("Order already opened.")
+			w.WriteHeader(http.StatusBadRequest)
+		}
+	} else {
+		if !alertRequest.IsCloseRequest() {
+			c.orderManagerService.OpenOrderAllIn(
+				strategy,
+				coin,
+				alertRequest.GetFuturesType(),
+			)
+		} else {
+			zap.S().Error("There is no opened transaction.")
+			c.telegramClient.SendMessage("There is no opened transaction.")
+			w.WriteHeader(http.StatusBadRequest)
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)
