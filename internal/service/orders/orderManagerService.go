@@ -103,9 +103,9 @@ func (s *OrderManagerService) openOrderWithCostAndFixedStopLossAndTakeProfit(tra
 		zap.S().Debugf("profitPrice %.2f  [%v]", takeProfitPrice, s.Clock.NowTime().Format(constants.DATE_TIME_FORMAT))
 	}
 
-	minimumBalanceInCents := viper.GetInt("default.minimum_balance_cents")
-	if cost < float64(minimumBalanceInCents) {
-		errorMsg := fmt.Sprintf("Insufficient funds for transaction. Current balance: $%.2f (minimum required: $%d)", cost, minimumBalanceInCents/100)
+	minimumBalance := viper.GetFloat64("default.minimum_balance_for_order")
+	if cost < minimumBalance {
+		errorMsg := fmt.Sprintf("Insufficient funds for transaction. Current balance: $%.2f (minimum required: $%.0f)", cost, minimumBalance)
 		zap.S().Error(errorMsg)
 		s.telegramClient.SendMessage(errorMsg)
 		return

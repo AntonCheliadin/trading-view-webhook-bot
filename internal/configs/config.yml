@@ -7,4 +7,4 @@ telegram:
 
 default:
   leverage: 1
-  minimum_balance_cents: 5000 # 50$
+  minimum_balance_for_order: 50 # 50$
