@@ -14,6 +14,8 @@ import (
 	"tradingViewWebhookBot/internal/service/date"
 	telegramApi "tradingViewWebhookBot/internal/telegram"
 	"tradingViewWebhookBot/internal/util"
+
+	"github.com/spf13/viper"
 )
 
 var orderManagerServiceImpl *OrderManagerService
@@ -99,6 +101,14 @@ func (s *OrderManagerService) openOrderWithCostAndFixedStopLossAndTakeProfit(tra
 	}
 	if takeProfitPrice > 0 {
 		zap.S().Debugf("profitPrice %.2f  [%v]", takeProfitPrice, s.Clock.NowTime().Format(constants.DATE_TIME_FORMAT))
+	}
+
+	minimumBalanceInCents := viper.GetInt("default.minimum_balance_cents")
+	if cost < float64(minimumBalanceInCents) {
+		errorMsg := fmt.Sprintf("Insufficient funds for transaction. Current balance: $%.2f (minimum required: $%d)", cost, minimumBalanceInCents/100)
+		zap.S().Error(errorMsg)
+		s.telegramClient.SendMessage(errorMsg)
+		return
 	}
 
 	currentPrice, err := s.exchangeApi.GetCurrentCoinPrice(coin)
