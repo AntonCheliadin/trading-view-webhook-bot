@@ -51,7 +51,7 @@ func (c *AlertWebhookController) HandleAlert(w http.ResponseWriter, r *http.Requ
 	}
 	defer r.Body.Close()
 
-	c.telegramClient.SendMessage(fmt.Sprintf("Alert triggered: %s", body))
+	c.telegramClient.SendMessage(fmt.Sprintf("Alert triggered:\n <blockquote>%s</blockquote>", body))
 
 	var alertRequest tradingview.AlertRequestDto
 	if err := json.Unmarshal(body, &alertRequest); err != nil {
