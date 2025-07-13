@@ -293,3 +293,19 @@ func (s *OrderManagerService) CalculateCurrentProfitInPercentWithLeverage(coin *
 
 	return currentProfitInPercent, nil
 }
+
+func (s *OrderManagerService) CalculateCurrentProfitWithLeverage(coin *domain.Coin, openedTransaction *domain.Transaction) (float64, float64, error) {
+	currentPrice, err := s.exchangeApi.GetCurrentCoinPrice(coin)
+	if err != nil {
+		zap.S().Errorf("Error during GetCurrentCoinPrice at %v: %s", s.Clock.NowTime(), err.Error())
+		return 0, 0, err
+	}
+
+	// Calculate profit percentage
+	profitPercent := util.CalculateProfitInPercentWithLeverage(openedTransaction.Price, currentPrice, openedTransaction.FuturesType, s.leverage)
+
+	// Convert percentage to dollars based on the initial investment
+	profitInDollars := openedTransaction.TotalCost * profitPercent / 100
+
+	return profitPercent, profitInDollars, nil
+}

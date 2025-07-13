@@ -6,18 +6,29 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"go.uber.org/zap"
 )
 
+// ProfitChecker defines the interface for checking order profits
+type ProfitChecker interface {
+	CheckOrderProfits()
+}
+
 type TelegramClient struct {
-	logger     *zap.Logger
-	apiKey     string
-	chatID     string
-	apiBaseURL string
-	enabled    bool
-	bot        *tgbotapi.BotAPI
+	logger        *zap.Logger
+	apiKey        string
+	chatID        string
+	apiBaseURL    string
+	enabled       bool
+	bot           *tgbotapi.BotAPI
+	profitChecker ProfitChecker
+}
+
+func (t *TelegramClient) SetProfitChecker(profitChecker ProfitChecker) {
+	t.profitChecker = profitChecker
 }
 
 func NewTelegramClient() *TelegramClient {
@@ -86,16 +97,20 @@ func (t *TelegramClient) StartMessageHandler() {
 				)
 			}
 
-			// Optional: Send confirmation reply
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID,
-				fmt.Sprintf("Received your message: %s", update.Message.Text))
-			msg.ReplyToMessageID = update.Message.MessageID
+			if strings.ToLower(update.Message.Text) == "positions" {
+				t.profitChecker.CheckOrderProfits()
+			} else {
+				// For other messages, send a confirmation reply
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID,
+					fmt.Sprintf("Received your message: %s", update.Message.Text))
+				msg.ReplyToMessageID = update.Message.MessageID
 
-			if _, err := t.bot.Send(msg); err != nil {
-				t.logger.Error("Error sending reply",
-					zap.Error(err),
-					zap.Int64("chat_id", update.Message.Chat.ID),
-				)
+				if _, err := t.bot.Send(msg); err != nil {
+					t.logger.Error("Error sending reply",
+						zap.Error(err),
+						zap.Int64("chat_id", update.Message.Chat.ID),
+					)
+				}
 			}
 		}
 	}()

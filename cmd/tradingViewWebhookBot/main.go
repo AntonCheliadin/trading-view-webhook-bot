@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"tradingViewWebhookBot/internal/api"
 	"tradingViewWebhookBot/internal/api/bybit"
 	"tradingViewWebhookBot/internal/controller"
 	"tradingViewWebhookBot/internal/database"
@@ -19,12 +20,14 @@ import (
 	"tradingViewWebhookBot/internal/service/date"
 	"tradingViewWebhookBot/internal/service/orders"
 	"tradingViewWebhookBot/internal/telegram"
+	"tradingViewWebhookBot/internal/worker"
 )
 
 type App struct {
-	logger *zap.Logger
-	db     *sqlx.DB
-	router *chi.Mux
+	logger             *zap.Logger
+	db                 *sqlx.DB
+	router             *chi.Mux
+	orderProfitChecker *worker.OrderProfitChecker
 }
 
 func main() {
@@ -64,16 +67,7 @@ func initializeApp() (*App, error) {
 		return nil, fmt.Errorf("failed to connect to database: %v", err)
 	}
 
-	router := initializeRouter(db)
-
-	return &App{
-		logger: logger,
-		db:     db,
-		router: router,
-	}, nil
-}
-
-func initializeRouter(db *sqlx.DB) *chi.Mux {
+	// Initialize repositories, services, and other components
 	repos := repository.NewRepositories(db)
 
 	exchangeApi := bybit.NewBybitApi(os.Getenv("BYBIT_API_KEY"), os.Getenv("BYBIT_API_SECRET"))
@@ -87,6 +81,36 @@ func initializeRouter(db *sqlx.DB) *chi.Mux {
 		telegramClient,
 		viper.GetInt64("default.leverage"))
 
+	// Initialize the order profit checker worker
+	orderProfitChecker := worker.NewOrderProfitChecker(
+		repos.TradingStrategy,
+		repos.Transaction,
+		repos.Coin,
+		exchangeApi,
+		telegramClient,
+		orderManagerService,
+	)
+
+	// Set the profit checker on the telegram client to handle "positions" command
+	telegramClient.SetProfitChecker(orderProfitChecker)
+
+	// Initialize controllers and router
+	router := initializeRouter(repos, exchangeApi, telegramClient, orderManagerService)
+
+	return &App{
+		logger:             logger,
+		db:                 db,
+		router:             router,
+		orderProfitChecker: orderProfitChecker,
+	}, nil
+}
+
+func initializeRouter(
+	repos *repository.Repository,
+	exchangeApi api.ExchangeApi,
+	telegramClient *telegram.TelegramClient,
+	orderManagerService *orders.OrderManagerService,
+) *chi.Mux {
 	healthController := controller.NewHealthController()
 	coinController := controller.NewCoinController(repos.Coin, exchangeApi, telegramClient)
 	webhookController := controller.NewAlertWebhookController(repos.TradingStrategy, repos.Transaction, repos.Coin, exchangeApi, telegramClient, orderManagerService)
@@ -119,6 +143,7 @@ func setupRoutes(r *chi.Mux, healthController *controller.HealthController, coin
 	r.Route("/debug", func(r chi.Router) {
 		r.Get("/open/{symbol}/{strategyTag}/{futureType}", debugController.OpenOrderAllIn)
 		r.Get("/close/{symbol}/{strategyTag}", debugController.CloseOrder)
+		// Profit check is now handled by the Telegram "positions" command
 	})
 }
 
@@ -128,11 +153,19 @@ func (a *App) run() error {
 		port = "8080"
 	}
 
+	// Start the order profit checker worker
+	a.orderProfitChecker.Start()
+	a.logger.Info("Order profit checker worker started")
+
 	a.logger.Info("Server starting", zap.String("port", port))
 	return http.ListenAndServe(":"+port, a.router)
 }
 
 func (a *App) cleanup() {
+	// Stop the order profit checker worker
+	a.orderProfitChecker.Stop()
+	a.logger.Info("Order profit checker worker stopped")
+
 	if err := a.logger.Sync(); err != nil {
 		log.Printf("Failed to sync logger: %v", err)
 	}
