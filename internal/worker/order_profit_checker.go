@@ -122,10 +122,11 @@ func (c *OrderProfitChecker) CheckOrderProfits() {
 			}
 
 			// Add transaction information to the message
-			message += fmt.Sprintf("Coin: %s, Entry: %.2f, Current: %.2f, Profit: %.2f%% ($%.2f)\n",
+			message += fmt.Sprintf("Coin: %s, Entry: %.2f, Current: %.2f, Cost: %.2f Profit: %.2f%% ($%.2f)\n",
 				coin.Symbol,
 				transaction.Price,
 				currentPrice,
+				transaction.TotalCost,
 				profitPercent,
 				profitDollars)
 		}
