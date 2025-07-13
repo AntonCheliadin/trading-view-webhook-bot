@@ -7,13 +7,15 @@ import (
 )
 
 type AlertRequestDto struct {
-	Tag          string `json:"tag" validate:"required"`
-	Ticker       string `json:"ticker" validate:"required"`
-	Price        string `json:"price" validate:"required"`
-	Side         string `json:"side" validate:"required,oneof=buy sell"`
-	Text         string `json:"text"`
-	Interval     string `json:"interval"`
-	PositionSize string `json:"positionSize"`
+	Tag                string `json:"tag" validate:"required"`
+	Ticker             string `json:"ticker" validate:"required"`
+	Price              string `json:"price" validate:"required"`
+	Side               string `json:"side" validate:"required,oneof=buy sell"`
+	Text               string `json:"text"`
+	Interval           string `json:"interval"`
+	PositionSize       string `json:"positionSize"`
+	MarketPosition     string `json:"marketPosition" validate:"oneof=short long flat"`
+	MarketPositionSize string `json:"marketPositionSize"`
 }
 
 func (r AlertRequestDto) GetFuturesType() futureType.FuturesType {
@@ -25,7 +27,7 @@ func (r AlertRequestDto) GetFuturesType() futureType.FuturesType {
 
 func (r AlertRequestDto) String() string {
 	return fmt.Sprintf(
-		"AlertRequest{tag: %s, ticker: %s, price: %s, side: %s, text: %s, interval: %s, positionSize: %s}",
+		"AlertRequest{tag: %s, ticker: %s, price: %s, side: %s, text: %s, interval: %s, positionSize: %s, marketPosition: %s, marketPositionSize: %s}",
 		r.Tag,
 		r.Ticker,
 		r.Price,
@@ -33,6 +35,8 @@ func (r AlertRequestDto) String() string {
 		r.Text,
 		r.Interval,
 		r.PositionSize,
+		r.MarketPosition,
+		r.MarketPositionSize,
 	)
 }
 
