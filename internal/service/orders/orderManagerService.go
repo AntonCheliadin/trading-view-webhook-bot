@@ -264,7 +264,8 @@ func (s *OrderManagerService) getCostOfOrder() float64 {
 		return 0
 	}
 
-	maxOrderCost := (walletBalanceDto.GetAvailableBalance() - 50) * float64(s.leverage)
+	fundsThatMustRemainAfterOrder := float64(10)
+	maxOrderCost := (walletBalanceDto.GetAvailableBalance() - fundsThatMustRemainAfterOrder) * float64(s.leverage)
 
 	return maxOrderCost
 }
