@@ -16,4 +16,4 @@ VALUES ('BTC 1D', 'ChatGpt without SL and TP (BTC ChatGpt 1D)', 'BTC_CHAT_GPT', 
 
 -- +migrate Up
 INSERT INTO trading_strategies (name, description, tag, created_at, updated_at)
-VALUES ('ETH 4H', 'SSL WAE_LB ATR LONG+SHORT (ETH 4H):', 'ETH_SSL_WAE_LONG_SHORT', NOW(), NOW());
+VALUES ('ETH 4H', 'SSL WAE_LB ATR LONG (ETH 4H):', 'ETH_SSL_WAE_LONG', NOW(), NOW());
