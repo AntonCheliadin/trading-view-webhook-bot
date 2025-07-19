@@ -29,13 +29,15 @@ func GetDollarsByCents(moneyInCents int64) float64 {
 func CalculateAmountByPriceAndCost(currentPrice float64, cost float64) float64 {
 	amount := float64(cost) / float64(currentPrice)
 	if amount > 10 {
-		return math.Round(amount) // Example: 15.7 -> 16
+		return math.Floor(amount) // Example: 15.7 -> 15
 	} else if amount > 1 {
-		return math.Round(amount*10) / 10 // Example: 1.92 -> 1.9
+		return math.Floor(amount*10) / 10 // Example: 1.92 -> 1.9
 	} else if amount > 0.1 {
-		return math.Round(amount*100) / 100 // Example: 0.567 -> 0.57, 0.123 -> 0.12
+		return math.Floor(amount*100) / 100 // Example: 0.567 -> 0.56
+	} else if amount > 0.001 {
+		return math.Floor(amount*1000) / 1000 // Example: 0.00760812595 -> 0.007
 	} else {
-		return math.Round(amount*1000000) / 1000000 // Example: 0.0123456789 -> 0.012346
+		return math.Floor(amount*1000000) / 1000000 // Example: 0.0123456789 -> 0.012346
 	}
 }
 
